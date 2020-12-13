@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="../style.css">
+
+    <script type="text/javascript" src="../plotly-latest.min.js"></script>
+
+    <title>Title</title>
+</head>
+<body>
+
+    <div id="plotlyGraph"></div>
+    <div>
+        <input type="checkbox" id="sin" name="sin" checked>
+        <label for="sin">sin</label>
+
+        <input type="checkbox" id="cos" name="cos" checked>
+        <label for="cos">cos</label>
+
+        <button type="button" id="myBtn">Stop!</button>
+    </div>
+    <br><br>
+    <div>
+        <input type="checkbox" id="checkNumber" name="checkNumber">
+        <label for="checkNumber">Number</label>
+
+        <input type="checkbox" id="checkRange" name="checkRange">
+        <label for="checkRange">Range</label>
+
+        <my-component></my-component>
+    </div>
+
+<script>
+    //Web Components===========================================================
+    class MyComponent extends HTMLElement{
+        connectedCallback(){
+            this.innerHTML = `
+<div class="displayNone" id="myCount">
+<br>
+            <input id="cnt" type="number"  name="cnt"  min="0"  max="5" step="0.5" value="1">
+</div>
+<div class="displayNone" id="myRange">
+<br>
+            <input id="range" type="range" name="range" min="0" max="5" step="0.01" value="1">
+
+`;
+        }
+    }
+    customElements.define('my-component', MyComponent);
+
+
+    const eventSourceUrl = "http://vmzakova.fei.stuba.sk/sse/sse.php"
+    var dataStructureSin = {
+        x: [],
+        y: [],
+        visible: true,
+    };
+    var dataStructureCos = {
+        x: [],
+        y: [],
+        visible: true,
+    };
+    var layout = {
+        colorway : ['#f3cec9', '#182844'],
+    };
+
+    var amplitude = 1;
+
+    var dataPointList = [];
+    var stopGraph = false;
+    //EventSource - Server-sent events
+    var cnt = 0;
+    if (typeof (EventSource) !== "undefined") {
+        const source = new EventSource(eventSourceUrl);
+        console.log(source);
+
+
+        source.addEventListener("message", function (e) {
+            const data = JSON.parse(e.data);
+            //console.log(data);
+
+            //console.log("1: x & y");
+            dataStructureSin.x.push(data.x);
+            dataStructureSin.y.push(data.y1 * amplitude);
+            //console.log("sin = " + dataStructureSin.y);
+
+            //console.log("2: x & y");
+            dataStructureCos.x.push(data.x);
+            dataStructureCos.y.push(data.y2 * amplitude);
+            //console.log("cos = " +  dataStructureCos.y);
+
+            dataPointList = [dataStructureSin, dataStructureCos];
+            //console.log("dataPointList =) :" + dataPointList[0].x);
+            if (!stopGraph) {
+                Plotly.newPlot("plotlyGraph", dataPointList, layout);
+            }
+        }, false);
+    } else {
+        document.getElementById("errorData").innerHTML = serverNotImplementWebSocketError;
+    }
+
+    var myBtn = document.getElementById("myBtn");
+    myBtn.onclick = ()=>{
+        if(!stopGraph){
+            stopGraph = true;
+        }
+        else{
+            stopGraph = false;
+        }
+    }
+
+    //checkBox------------------------------------------------
+    //'#f3cec9', '#182844'
+    document.getElementById('sin').onchange = () =>{
+        let checkBox = document.getElementById('sin');
+        if(checkBox.checked){
+            dataStructureSin.visible = true;
+        }
+        else{
+            dataStructureSin.visible = false;
+        }
+        if(dataStructureSin.visible && dataStructureCos.visible){
+            layout.colorway = ['#f3cec9', '#182844'];
+        }else if(!dataStructureSin.visible && dataStructureCos.visible){
+            layout.colorway = ['#182844', '#182844'];
+        }
+        else if(dataStructureSin.visible && !dataStructureCos.visible){
+            layout.colorway = ['#f3cec9', '#f3cec9'];
+        }
+    }
+    document.getElementById('cos').onchange = () =>{
+        let checkBox = document.getElementById('cos');
+        if(checkBox.checked){
+            dataStructureCos.visible = true;
+        }
+        else{
+            dataStructureCos.visible = false;
+        }
+        if(dataStructureSin.visible && dataStructureCos.visible){
+            layout.colorway = ['#f3cec9', '#182844'];
+        }else if(!dataStructureSin.visible && dataStructureCos.visible){
+            layout.colorway = ['#182844', '#182844'];
+        }
+        else if(dataStructureSin.visible && !dataStructureCos.visible){
+            layout.colorway = ['#f3cec9', '#f3cec9'];
+        }
+    }
+
+    //range cnt =======================================================
+    document.getElementById("range").onmousemove = () => {
+        let range = document.getElementById("range");
+        let cnt = document.getElementById("cnt");
+        cnt.value = range.value;
+        amplitude = cnt.value;
+    }
+    document.getElementById("cnt").onmousemove = () => {
+        let range = document.getElementById("range");
+        let cnt = document.getElementById("cnt");
+        range.value = cnt.value;
+        amplitude = cnt.value;
+    }
+
+    document.getElementById('checkNumber').onchange = () => {
+        let check = document.getElementById('checkNumber');
+        let el = document.getElementById('myCount');
+        if(check.checked){
+            el.classList.remove("displayNone");
+            el.classList.add("displayBlock");
+        }
+        else {
+            el.classList.add("displayNone");
+            el.classList.remove("displayBlock");
+        }
+    }
+    document.getElementById('checkRange').onchange = () => {
+        let check = document.getElementById('checkRange');
+        let el = document.getElementById('myRange');
+        if(check.checked){
+            el.classList.remove("displayNone");
+            el.classList.add("displayBlock");
+        }
+        else {
+            el.classList.add("displayNone");
+            el.classList.remove("displayBlock");
+        }
+    }
+
+</script>
+</body>
+</html>

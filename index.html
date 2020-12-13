@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang='sk'>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="icon" href="gr.gif">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300&family=Poppins&display=swap" rel="stylesheet">
+    <script type="text/javascript" src="plotly-latest.min.js"></script>
+
+    <title>Sin/Cos</title>
+</head>
+<body>
+    <div class="card text-center container">
+        <div class="card-header">
+            <h1>Sin/Cos</h1>
+        </div>
+        <div class="card-body">
+            <div>
+                <input type="checkbox" id="sin" name="sin" checked>
+                <label for="sin">sin</label>
+
+                <input type="checkbox" id="cos" name="cos" checked>
+                <label for="cos">cos</label>
+            </div>
+
+            <div id="plotly"></div>
+
+            <div>
+                <input type="checkbox" id="checkNumber" name="checkNumber">
+                <label for="checkNumber">Number</label>
+
+                <input type="checkbox" id="checkRange" name="checkRange">
+                <label for="checkRange">Range</label>
+
+                <my-component></my-component>
+            </div>
+        </div>
+        <div class="card-footer text-muted">
+            <button type="button" id="myBtn" class="btn btn-danger">Stop</button>
+        </div>
+    </div>
+
+
+
+
+<script>
+    //Web Components===========================================================
+    class MyComponent extends HTMLElement{
+        connectedCallback(){
+            this.innerHTML = `
+<div class="displayNone" id="myCount">
+<br>
+            <input id="cnt" type="number"  name="cnt"  min="0"  max="5" step="0.5" value="1">
+</div>
+<div class="displayNone" id="myRange">
+<br>
+            <input id="range" type="range" name="range" min="0" max="5" step="0.01" value="1">
+
+`;
+        }
+    }
+    customElements.define('my-component', MyComponent);
+
+
+    const url = "http://vmzakova.fei.stuba.sk/sse/sse.php"
+    var structSin = {
+        x: [],
+        y: [],
+        visible: true,
+    };
+    var structCos = {
+        x: [],
+        y: [],
+        visible: true,
+    };
+    var layout = {
+        colorway : ['#f3cec9', '#182844'],
+    };
+
+    var ampl = 1;
+
+    var xy1y2List = [];
+    var stopBool = false;
+    //EventSource - Server-sent events
+    var cnt = 0;
+    if (typeof (EventSource) !== "undefined") {
+        const source = new EventSource(url);
+        source.addEventListener("message", function (e) {
+            const data = JSON.parse(e.data);
+
+            structSin.x.push(data.x);
+            structCos.x.push(data.x);
+
+            structSin.y.push(data.y1 * ampl);
+            structCos.y.push(data.y2 * ampl);
+
+            xy1y2List = [structSin, structCos];
+            if (!stopBool) {
+                Plotly.newPlot("plotly", xy1y2List, layout);
+            }
+        }, false);
+    }
+
+    //button========================================================
+    var myBtn = document.getElementById("myBtn");
+    myBtn.onclick = ()=>{
+        if(!stopBool){
+            stopBool = true;
+        }
+        else{
+            stopBool = false;
+        }
+    }
+
+    //checkBox sin/cos------------------------------------------------
+    //'#f3cec9', '#182844'
+    document.getElementById('sin').onchange = () =>{
+        let checkBox = document.getElementById('sin');
+        if(checkBox.checked){
+            structSin.visible = true;
+        }
+        else{
+            structSin.visible = false;
+        }
+        if(structSin.visible && structCos.visible){
+            layout.colorway = ['#f3cec9', '#182844'];
+        }else if(!structSin.visible && structCos.visible){
+            layout.colorway = ['#182844', '#182844'];
+        }
+        else if(structSin.visible && !structCos.visible){
+            layout.colorway = ['#f3cec9', '#f3cec9'];
+        }
+    }
+    document.getElementById('cos').onchange = () =>{
+        let checkBox = document.getElementById('cos');
+        if(checkBox.checked){
+            structCos.visible = true;
+        }
+        else{
+            structCos.visible = false;
+        }
+        if(structSin.visible && structCos.visible){
+            layout.colorway = ['#f3cec9', '#182844'];
+        }else if(!structSin.visible && structCos.visible){
+            layout.colorway = ['#182844', '#182844'];
+        }
+        else if(structSin.visible && !structCos.visible){
+            layout.colorway = ['#f3cec9', '#f3cec9'];
+        }
+    }
+
+    //range/cnt =======================================================
+    document.getElementById("range").onmousemove = () => {
+        let range = document.getElementById("range");
+        let cnt = document.getElementById("cnt");
+        cnt.value = range.value;
+        ampl = cnt.value;
+    }
+    document.getElementById("cnt").onmousemove = () => {
+        let range = document.getElementById("range");
+        let cnt = document.getElementById("cnt");
+        range.value = cnt.value;
+        ampl = cnt.value;
+    }
+
+    //checkBox show number/range
+    document.getElementById('checkNumber').onchange = () => {
+        let check = document.getElementById('checkNumber');
+        let el = document.getElementById('myCount');
+        if(check.checked){
+            el.classList.remove("displayNone");
+            el.classList.add("displayBlock");
+        }
+        else {
+            el.classList.add("displayNone");
+            el.classList.remove("displayBlock");
+        }
+    }
+    document.getElementById('checkRange').onchange = () => {
+        let check = document.getElementById('checkRange');
+        let el = document.getElementById('myRange');
+        if(check.checked){
+            el.classList.remove("displayNone");
+            el.classList.add("displayBlock");
+        }
+        else {
+            el.classList.add("displayNone");
+            el.classList.remove("displayBlock");
+        }
+    }
+
+</script>
+</body>
+</html>

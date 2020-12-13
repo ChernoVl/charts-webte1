@@ -1,0 +1,12 @@
+*{
+    font-family: 'Oswald', sans-serif;
+    font-family: 'Poppins', sans-serif;
+}
+
+.displayBlock{
+    display: block;
+}
+
+.displayNone{
+    display: none;
+}
