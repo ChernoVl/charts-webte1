@@ -1,3 +1,5 @@
+http://147.175.121.202/~xchernov/z6noutr/
+
 #  Zadanie cvičenia:
 Úlohou zadania je na základe údajov generovaných na stránke http://vmzakova.fei.stuba.sk/sse  vykresľovať postupne graf až do momentu, pokiaľ nestlačíte na vašej stránke tlačidlo "Koniec". V tomto okamihu je potrebné, aby sa graf zobrazil celý, t.j. od začiatku jeho vykresľovania až po jeho koniec.
 V obrázku vykresľujte dve farebne odlíšené grafické závislosti - zodpovedajúce dvom meraniam (zašumený sínus a kosínus). 
